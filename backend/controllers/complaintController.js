@@ -2,7 +2,7 @@
  * Complaint Controller
  * Handles all complaint-related operations for citizens
  */
-
+const analyzeComplaint = require('../utils/geminiAI');
 const Complaint = require('../models/Complaint');
 const { detectPriority } = require('../utils/priorityDetector');
 const { generateComplaintId } = require('../utils/generateId');
@@ -24,7 +24,15 @@ const submitComplaint = async (req, res) => {
     }
 
     // AI Priority Detection based on category + text keywords
-    const priority = detectPriority(category, title, description);
+   
+
+let priority = "Low";
+
+if (aiAnalysis.includes("HIGH")) {
+  priority = "High";
+} else if (aiAnalysis.includes("MEDIUM")) {
+  priority = "Medium";
+}
 
     // Generate unique complaint ID
     const complaintId = await generateComplaintId();
@@ -44,6 +52,9 @@ const submitComplaint = async (req, res) => {
     }
 
     // Create the complaint
+    const aiAnalysis = await analyzeComplaint(description);
+
+console.log("AI Analysis:", aiAnalysis);
     const complaint = await Complaint.create({
       complaintId,
       complainant: req.user._id,
