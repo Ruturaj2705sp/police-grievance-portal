@@ -71,7 +71,10 @@ const SubmitComplaint = () => {
       });
 
       if (res.data.success) {
-        setSubmitted(res.data.complaint);
+        setSubmitted({
+  ...response.data.complaint,
+  aiAnalysis: response.data.aiAnalysis
+});
         toast.success('Complaint submitted successfully!');
       }
     } catch (err) {
