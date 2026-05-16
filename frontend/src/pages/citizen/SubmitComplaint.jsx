@@ -72,8 +72,8 @@ const SubmitComplaint = () => {
 
       if (res.data.success) {
         setSubmitted({
-  ...response.data.complaint,
-  aiAnalysis: response.data.aiAnalysis
+  ...res.data.complaint,
+  aiAnalysis: res.data.aiAnalysis || "No AI analysis available"
 });
         toast.success('Complaint submitted successfully!');
       }
