@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const analyzeComplaint = async (complaintText) => {
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-pro",
     });
 
     const prompt = `
@@ -29,7 +29,7 @@ ${complaintText}
     return response.text();
 
   } catch (error) {
-    console.error("Gemini AI Error:", error);
+    console.error("Gemini AI Error:", error.message);
     return "AI analysis failed";
   }
 };
