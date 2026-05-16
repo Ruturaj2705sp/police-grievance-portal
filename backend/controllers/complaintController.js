@@ -31,11 +31,13 @@ const submitComplaint = async (req, res) => {
     // ─── AI Priority Detection ──────────────────────────────────────────────
     let priority = "Low";
 
-    if (aiAnalysis.includes("HIGH")) {
-      priority = "High";
-    } else if (aiAnalysis.includes("MEDIUM")) {
-      priority = "Medium";
-    }
+const analysisText = aiAnalysis.toUpperCase();
+
+if (analysisText.includes("HIGH")) {
+  priority = "High";
+} else if (analysisText.includes("MEDIUM")) {
+  priority = "Medium";
+}
 
     // ─── Generate Complaint ID ──────────────────────────────────────────────
     const complaintId = await generateComplaintId();
