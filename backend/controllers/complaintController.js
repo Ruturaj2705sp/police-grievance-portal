@@ -2,9 +2,9 @@
  * Complaint Controller
  * Handles all complaint-related operations for citizens
  */
+
 const analyzeComplaint = require('../utils/geminiAI');
 const Complaint = require('../models/Complaint');
-const { detectPriority } = require('../utils/priorityDetector');
 const { generateComplaintId } = require('../utils/generateId');
 const path = require('path');
 
@@ -23,22 +23,26 @@ const submitComplaint = async (req, res) => {
       });
     }
 
-    // AI Priority Detection based on category + text keywords
-   
+    // ─── AI Analysis ─────────────────────────────────────────────────────────
+    const aiAnalysis = await analyzeComplaint(description);
 
-let priority = "Low";
+    console.log("AI Analysis:", aiAnalysis);
 
-if (aiAnalysis.includes("HIGH")) {
-  priority = "High";
-} else if (aiAnalysis.includes("MEDIUM")) {
-  priority = "Medium";
-}
+    // ─── AI Priority Detection ──────────────────────────────────────────────
+    let priority = "Low";
 
-    // Generate unique complaint ID
+    if (aiAnalysis.includes("HIGH")) {
+      priority = "High";
+    } else if (aiAnalysis.includes("MEDIUM")) {
+      priority = "Medium";
+    }
+
+    // ─── Generate Complaint ID ──────────────────────────────────────────────
     const complaintId = await generateComplaintId();
 
-    // Process uploaded evidence files
+    // ─── Process Uploaded Evidence Files ────────────────────────────────────
     const evidence = [];
+
     if (req.files && req.files.length > 0) {
       req.files.forEach(file => {
         evidence.push({
@@ -51,10 +55,7 @@ if (aiAnalysis.includes("HIGH")) {
       });
     }
 
-    // Create the complaint
-    const aiAnalysis = await analyzeComplaint(description);
-
-console.log("AI Analysis:", aiAnalysis);
+    // ─── Create Complaint ───────────────────────────────────────────────────
     const complaint = await Complaint.create({
       complaintId,
       complainant: req.user._id,
@@ -75,21 +76,32 @@ console.log("AI Analysis:", aiAnalysis);
       ],
     });
 
-    // Populate complainant details for response
+    // ─── Populate Complainant Details ───────────────────────────────────────
     await complaint.populate('complainant', 'name email phone');
 
     res.status(201).json({
       success: true,
       message: `Complaint submitted successfully! Your complaint ID is ${complaintId}`,
       complaint,
+      aiAnalysis,
     });
+
   } catch (error) {
     console.error('Submit Complaint Error:', error);
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(e => e.message);
-      return res.status(400).json({ success: false, message: messages.join(', ') });
+
+      return res.status(400).json({
+        success: false,
+        message: messages.join(', '),
+      });
     }
-    res.status(500).json({ success: false, message: 'Failed to submit complaint.' });
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to submit complaint.',
+    });
   }
 };
 
@@ -100,7 +112,6 @@ const getMyComplaints = async (req, res) => {
   try {
     const { page = 1, limit = 10, status, priority, search } = req.query;
 
-    // Build query filter
     const filter = {
       complainant: req.user._id,
       isDeleted: false,
@@ -108,6 +119,7 @@ const getMyComplaints = async (req, res) => {
 
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
+
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -125,6 +137,7 @@ const getMyComplaints = async (req, res) => {
         .limit(parseInt(limit))
         .populate('complainant', 'name email')
         .populate('assignedOfficer', 'name badgeNumber stationName'),
+
       Complaint.countDocuments(filter),
     ]);
 
@@ -138,9 +151,14 @@ const getMyComplaints = async (req, res) => {
         totalPages: Math.ceil(total / parseInt(limit)),
       },
     });
+
   } catch (error) {
     console.error('Get My Complaints Error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch complaints.' });
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch complaints.',
+    });
   }
 };
 
@@ -161,20 +179,32 @@ const getComplaintById = async (req, res) => {
       .populate('statusHistory.updatedBy', 'name role');
 
     if (!complaint) {
-      return res.status(404).json({ success: false, message: 'Complaint not found.' });
+      return res.status(404).json({
+        success: false,
+        message: 'Complaint not found.',
+      });
     }
 
-    // Citizens can only view their own complaints
     if (
       req.user.role === 'citizen' &&
       complaint.complainant._id.toString() !== req.user._id.toString()
     ) {
-      return res.status(403).json({ success: false, message: 'Access denied.' });
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied.',
+      });
     }
 
-    res.json({ success: true, complaint });
+    res.json({
+      success: true,
+      complaint,
+    });
+
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to fetch complaint.' });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch complaint.',
+    });
   }
 };
 
@@ -189,7 +219,7 @@ const trackComplaint = async (req, res) => {
     })
       .populate('complainant', 'name')
       .populate('assignedOfficer', 'name stationName')
-      .select('-evidence.path'); // Hide internal file paths
+      .select('-evidence.path');
 
     if (!complaint) {
       return res.status(404).json({
@@ -198,10 +228,22 @@ const trackComplaint = async (req, res) => {
       });
     }
 
-    res.json({ success: true, complaint });
+    res.json({
+      success: true,
+      complaint,
+    });
+
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to track complaint.' });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to track complaint.',
+    });
   }
 };
 
-module.exports = { submitComplaint, getMyComplaints, getComplaintById, trackComplaint };
+module.exports = {
+  submitComplaint,
+  getMyComplaints,
+  getComplaintById,
+  trackComplaint,
+};
