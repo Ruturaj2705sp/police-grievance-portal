@@ -110,6 +110,15 @@ const SubmitComplaint = () => {
             <AlertTriangle className="w-4 h-4" />
             Priority Assigned: {submitted.priority}
           </div>
+          <div className="mt-4 p-4 rounded-lg bg-blue-900/20 border border-blue-500">
+  <h3 className="text-blue-300 font-semibold mb-2">
+    AI Analysis
+  </h3>
+
+  <pre className="text-sm text-gray-300 whitespace-pre-wrap">
+    {submitted.aiAnalysis}
+  </pre>
+</div>
           <div className="flex flex-col gap-3">
             <button onClick={() => navigate(`/complaint/${submitted._id}`)} className="btn-primary">
               View Complaint Details
