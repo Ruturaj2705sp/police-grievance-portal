@@ -29,15 +29,17 @@ const submitComplaint = async (req, res) => {
     console.log("AI Analysis:", aiAnalysis);
 
     // ─── AI Priority Detection ──────────────────────────────────────────────
-    let priority = "Low";
+ let priority = "Low";
 
-const analysisText = aiAnalysis.toUpperCase();
+const priorityMatch = aiAnalysis.match(/Priority:\s*(HIGH|MEDIUM|LOW)/i);
 
-if (analysisText.includes("HIGH")) {
-  priority = "High";
-} else if (analysisText.includes("MEDIUM")) {
-  priority = "Medium";
+if (priorityMatch) {
+  priority =
+    priorityMatch[1].charAt(0).toUpperCase() +
+    priorityMatch[1].slice(1).toLowerCase();
 }
+
+console.log("Detected Priority:", priority);
 
     // ─── Generate Complaint ID ──────────────────────────────────────────────
     const complaintId = await generateComplaintId();
