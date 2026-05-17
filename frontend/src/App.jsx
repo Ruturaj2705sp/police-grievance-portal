@@ -2,7 +2,7 @@
  * App.jsx
  * Root component with React Router, Context Providers, and all routes
  */
-
+import AIChatbot from './components/common/AIChatbot';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -50,6 +50,7 @@ const AppLayout = ({ children }) => {
     <>
       {!isAdminRoute && <Navbar />}
       <main className={!isAdminRoute ? '' : ''}>{children}</main>
+      <AIChatbot />
     </>
   );
 };
