@@ -72,6 +72,10 @@ router.post('/analyze', aiLimiter, async (req, res) => {
 // Chatbot endpoint
 // Body: { message, history: [{ role, content }] }
 router.post('/chat', chatLimiter, async (req, res) => {
+  console.log('=== CHAT ROUTE HIT ===');
+  console.log('GEMINI KEY EXISTS:', !!process.env.GEMINI_API_KEY);
+  console.log('MESSAGE:', req.body.message);
+  
   try {
     const { message, history = [] } = req.body;
 
