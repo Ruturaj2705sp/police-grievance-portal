@@ -2,7 +2,9 @@
  * Police Station Grievance Portal - Backend Server
  * Entry point for the Express application
  */
-
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const { generalLimiter, authLimiter } = require('./middleware/rateLimiter');
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -36,6 +38,12 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json({ limit: '10mb' }));
+app.use(helmet({ crossOriginEmbedderPolicy: false }));
+app.use(mongoSanitize());
+app.use('/api/', generalLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/ai', require('./routes/aiRoutes'));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve uploaded files statically

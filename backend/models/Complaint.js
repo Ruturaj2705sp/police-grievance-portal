@@ -145,10 +145,22 @@ const complaintSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+     aiAnalysis: {
+  category:        { type: String, default: null },
+  priority:        { type: String, enum: ['High','Medium','Low'], default: null },
+  priorityReason:  { type: String, default: null },
+  summary:         { type: String, default: null },
+  riskLevel:       { type: String, enum: ['Critical','High','Medium','Low'], default: null },
+  suggestedAction: { type: String, default: null },
+  aiProcessed:     { type: Boolean, default: false },
+  processedAt:     { type: Date, default: null },
+},
   },
   {
     timestamps: true,
+   
   }
+  
 );
 
 // ─── Index for faster queries ─────────────────────────────────────────────────
