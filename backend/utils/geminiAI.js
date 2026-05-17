@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const analyzeComplaint = async (complaintText) => {
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-pro",
+      model: "gemini-2.0-flash",
     });
 
     const prompt = `
@@ -23,9 +23,7 @@ ${complaintText}
 `;
 
     const result = await model.generateContent(prompt);
-
     const response = await result.response;
-
     return response.text();
 
   } catch (error) {
