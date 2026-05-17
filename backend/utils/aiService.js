@@ -29,7 +29,7 @@ const analyzeComplaint = async (title, description, existingCategory = '') => {
   if (!genAI) return fallback;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
     const prompt = `You are a police complaint analysis AI for India.
 Analyze this complaint and respond ONLY with valid JSON — no markdown, no explanation.
 
@@ -82,7 +82,7 @@ const getChatbotReply = async (userMessage, conversationHistory = []) => {
   if (!genAI) return { reply: fallback, aiProcessed: false };
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     const historyText = conversationHistory
       .slice(-6)
