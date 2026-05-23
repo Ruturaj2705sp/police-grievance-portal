@@ -30,7 +30,7 @@ Always respond in the same language the user writes in.`,
     ];
 
     const completion = await client.chat.completions.create({
-      model: 'meta-llama/llama-3.2-3b-instruct:free',
+      model: 'google/gemma-3-4b-it:free',
       messages,
     });
 
@@ -56,7 +56,7 @@ const analyzeComplaint = async (title, description, existingCategory = '') => {
 
   try {
     const completion = await client.chat.completions.create({
-      model: 'meta-llama/llama-3.2-3b-instruct:free',
+      model: 'google/gemma-3-4b-it:free',
       messages: [
         {
           role: 'user',
@@ -111,7 +111,7 @@ const translateText = async (text, targetLanguage) => {
   if (!client || targetLanguage === 'en' || !text) return text;
   try {
     const completion = await client.chat.completions.create({
-      model: 'meta-llama/llama-3.2-3b-instruct:free',
+      model: 'google/gemma-3-4b-it:free',
       messages: [
         {
           role: 'user',
