@@ -1,18 +1,44 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-console.log('GEMINI KEY LOADED:', !!process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY?.substring(0, 8));
-const genAI = process.env.GEMINI_API_KEY
-  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+const OpenAI = require('openai');
+
+const client = process.env.OPENROUTER_API_KEY
+  ? new OpenAI({
+      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey: process.env.OPENROUTER_API_KEY,
+    })
   : null;
 
-const extractJSON = (text) => {
+const getChatbotReply = async (userMessage, conversationHistory = []) => {
+  const fallback = "I'm here to help! Please describe your issue or ask about filing a complaint.";
+
+  if (!client) return { reply: fallback, aiProcessed: false };
+
   try {
-    const cleaned = text
-      .replace(/```json\n?/gi, '')
-      .replace(/```\n?/gi, '')
-      .trim();
-    return JSON.parse(cleaned);
-  } catch {
-    return null;
+    const messages = [
+      {
+        role: 'system',
+        content: `You are a helpful police grievance portal assistant for Indian citizens.
+Help citizens file complaints, track status, understand categories, and use the portal.
+Be concise (2-3 sentences max), helpful, and professional.
+Never give legal advice. Always suggest filing a formal complaint for serious issues.
+Always respond in the same language the user writes in.`,
+      },
+      ...conversationHistory.slice(-6).map(m => ({
+        role: m.role === 'bot' ? 'assistant' : 'user',
+        content: m.content,
+      })),
+      { role: 'user', content: userMessage },
+    ];
+
+    const completion = await client.chat.completions.create({
+      model: 'meta-llama/llama-3.2-3b-instruct:free',
+      messages,
+    });
+
+    const reply = completion.choices[0]?.message?.content?.trim() || fallback;
+    return { reply, aiProcessed: true };
+  } catch (error) {
+    console.error('OpenRouter chatbot error:', error.message);
+    return { reply: fallback, aiProcessed: false };
   }
 };
 
@@ -26,31 +52,36 @@ const analyzeComplaint = async (title, description, existingCategory = '') => {
     aiProcessed: false,
   };
 
-  if (!genAI) return fallback;
+  if (!client) return fallback;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-    const prompt = `You are a police complaint analysis AI for India.
-Analyze this complaint and respond ONLY with valid JSON — no markdown, no explanation.
+    const completion = await client.chat.completions.create({
+      model: 'meta-llama/llama-3.2-3b-instruct:free',
+      messages: [
+        {
+          role: 'user',
+          content: `You are a police complaint analysis AI for India.
+Analyze this complaint and respond ONLY with valid JSON.
 
-Complaint Title: "${title}"
-Complaint Description: "${description}"
+Title: "${title}"
+Description: "${description}"
 
-Respond with exactly this JSON structure:
+Respond with exactly this JSON:
 {
   "category": "one of: murder, kidnapping, assault, terrorism, robbery, harassment, fraud, cybercrime, theft, vandalism, domestic_violence, missing_person, noise_complaint, traffic_issue, minor_dispute, other",
   "priority": "one of: High, Medium, Low",
-  "priorityReason": "1-2 sentence explanation of why this priority was assigned",
-  "summary": "concise 1-2 sentence summary of the complaint",
+  "priorityReason": "1-2 sentence explanation",
+  "summary": "1-2 sentence summary",
   "riskLevel": "one of: Critical, High, Medium, Low",
-  "suggestedAction": "brief recommended action for police officer"
-}`;
+  "suggestedAction": "brief recommended action"
+}`,
+        },
+      ],
+    });
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    const parsed = extractJSON(text);
-
-    if (!parsed || !parsed.priority || !parsed.category) return fallback;
+    const text = completion.choices[0]?.message?.content || '';
+    const cleaned = text.replace(/```json\n?/gi, '').replace(/```\n?/gi, '').trim();
+    const parsed = JSON.parse(cleaned);
 
     const validPriorities = ['High', 'Medium', 'Low'];
     const validRiskLevels = ['Critical', 'High', 'Medium', 'Low'];
@@ -71,53 +102,24 @@ Respond with exactly this JSON structure:
       aiProcessed: true,
     };
   } catch (error) {
-    console.error('Gemini analyzeComplaint error:', error.message);
+    console.error('OpenRouter analyze error:', error.message);
     return { ...fallback, aiProcessed: false };
   }
 };
 
-const getChatbotReply = async (userMessage, conversationHistory = []) => {
-  const fallback = "I'm here to help! Please describe your issue or ask about filing a complaint.";
-
-  if (!genAI) return { reply: fallback, aiProcessed: false };
-
-  try {
-   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
-    const historyText = conversationHistory
-      .slice(-6)
-      .map(m => `${m.role === 'user' ? 'Citizen' : 'Assistant'}: ${m.content}`)
-      .join('\n');
-
-    const prompt = `You are a helpful police grievance portal assistant for Indian citizens.
-Help citizens file complaints, track status, understand categories, and use the portal.
-Be concise (2-3 sentences max), helpful, and professional.
-Never give legal advice. Always suggest filing a formal complaint for serious issues.
-Always respond in the same language the user writes in.
-
-${historyText ? `Conversation so far:\n${historyText}\n` : ''}
-Citizen: ${userMessage}
-Assistant:`;
-
-    const result = await model.generateContent(prompt);
-    const reply = result.response.text().trim();
-
-    return { reply: reply || fallback, aiProcessed: true };
-  } catch (error) {
-    console.error('Gemini chatbot error:', error.message);
-    return { reply: fallback, aiProcessed: false };
-  }
-};
-
 const translateText = async (text, targetLanguage) => {
-  if (!genAI || targetLanguage === 'en' || !text) return text;
+  if (!client || targetLanguage === 'en' || !text) return text;
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    const prompt = `Translate the following text to ${targetLanguage}. 
-Return ONLY the translated text, nothing else:
-"${text}"`;
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim() || text;
+    const completion = await client.chat.completions.create({
+      model: 'meta-llama/llama-3.2-3b-instruct:free',
+      messages: [
+        {
+          role: 'user',
+          content: `Translate to ${targetLanguage}. Return ONLY translated text: "${text}"`,
+        },
+      ],
+    });
+    return completion.choices[0]?.message?.content?.trim() || text;
   } catch {
     return text;
   }
