@@ -1,33 +1,20 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const { analyzeComplaint: analyzeWithOpenRouter } = require('./aiService');
 
 const analyzeComplaint = async (complaintText) => {
   try {
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
-    });
+    const result = await analyzeWithOpenRouter(
+      "Police Complaint",
+      complaintText
+    );
 
-    const prompt = `
-Analyze this police complaint carefully.
-
-Return ONLY in this format:
-
-Priority: HIGH or MEDIUM or LOW
-Category: category name
-Reason: why this priority was assigned
-Summary: short summary
-
-Complaint:
-${complaintText}
+    return `
+Priority: ${result.priority}
+Category: ${result.category}
+Reason: ${result.priorityReason}
+Summary: ${result.summary}
 `;
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
-
   } catch (error) {
-    console.error("Gemini AI Error:", error.message);
+    console.error("AI Analysis Error:", error.message);
     return "AI analysis failed";
   }
 };
