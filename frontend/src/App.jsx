@@ -6,6 +6,7 @@ import AIChatbot from './components/common/AIChatbot';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { Analytics } from '@vercel/analytics/react';
 
 // Context Providers
 import { AuthProvider } from './context/AuthContext';
@@ -188,6 +189,9 @@ const App = () => {
               },
             }}
           />
+
+          {/* Vercel Web Analytics */}
+          <Analytics />
         </Router>
       </AuthProvider>
     </ThemeProvider>
