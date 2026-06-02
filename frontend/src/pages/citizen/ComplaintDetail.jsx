@@ -127,7 +127,7 @@ const ComplaintDetail = () => {
                   {complaint.evidence.map((ev, i) => (
                     <a
                       key={i}
-                      href={ev.path}
+                      href={ev.path.startsWith('http') ? ev.path : `https://police-grievance-portal-1bfk.onrender.com${ev.path}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-all group"

@@ -50,12 +50,12 @@ console.log("Detected Priority:", priority);
     if (req.files && req.files.length > 0) {
       req.files.forEach(file => {
         evidence.push({
-          filename: file.filename,
-          originalName: file.originalname,
-          mimetype: file.mimetype,
-          size: file.size,
-          path: `/uploads/evidence/${file.filename}`,
-        });
+  filename: file.filename,
+  originalName: file.originalname,
+  mimetype: file.mimetype,
+  size: file.size,
+  path: `${process.env.BACKEND_URL}/uploads/evidence/${file.filename}`,
+});
       });
     }
 
